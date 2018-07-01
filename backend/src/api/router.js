@@ -18,7 +18,7 @@ con.connect(function(err)
 });
 
 router.get('/get_pokemon', function (req, res) {
-	var user = "tig567899";
+	var user = req.query['username'];
 	var sql = "SELECT name, hp, max_hp, exp, to_next FROM pokemon WHERE owner= ?";
 	con.query(sql, [user], function(err, result)
 	{
