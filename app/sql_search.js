@@ -37,4 +37,27 @@ function getPokemon(req, res){
 		res.status(200).json(result);
 	});
 }
-module.exports = { getPlayer, getPokemon };
+
+function insertPlayer(req, res){
+	var user = req.body.username;
+	console.log(user);
+	var fname = req.body.first_name;
+	//console.log(fname);
+	var lname = req.body.last_name;
+	//console.log(lname);
+	var pass = req.body.password;
+	//console.log(pass);
+	
+	var sql = "INSERT INTO users (first_name, last_name, username, password, status) VALUES (?, ?, ?, ?, 0)"
+	con.query(sql, [fname, lname, user, pass], function(err, result)
+	{
+		if (err) throw err;
+		console.log(result);
+		res.status(200).json(result);
+	});
+}
+
+function verifyPlayer(req, res){
+	
+}
+module.exports = { getPlayer, getPokemon, insertPlayer };
