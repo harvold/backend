@@ -14,7 +14,7 @@ router.get('/', function (req, res) {
 });
 
 router.get('/u/:username', function (req, res) {
-	sqlSearch.getProfile(req, res);
+	sqlSearch.getPlayer(req, res);
 });
 
 module.exports = router;

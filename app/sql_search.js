@@ -37,4 +37,4 @@ function getPokemon(req, res){
 		res.status(200).json(result);
 	});
 }
-module.exports = { getPlayer };
+module.exports = { getPlayer, getPokemon };
