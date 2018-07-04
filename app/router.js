@@ -4,7 +4,6 @@ const playerStuff = require('./player-stuff');
 
 const router = express.Router();
 
-<<<<<<< HEAD:backend/src/api/router.js
 const mysql = require('mysql');
 
 var con = mysql.createConnection({
