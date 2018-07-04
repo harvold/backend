@@ -53,7 +53,7 @@ function insertPlayer(req, res){
 	{
 		if (err) throw err;
 		console.log(result);
-		res.status(200).json(result);
+		res.status(200);
 	});
 }
 
