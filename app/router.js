@@ -16,9 +16,8 @@ router.get('/u/:username', function (req, res) {
 	sqlSearch.getPlayer(req, res);
 });
 
-router.post('/register', function (req, res){
+router.route('/register').post(function (req, res){
 	console.log(req.body);
-	console.log(req.params);
 	//sqlSearch.insertPlayer(req, res);
 	res.status(200).send("received");
 });
