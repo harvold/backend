@@ -1,7 +1,7 @@
 const express = require('express');
 const helmet = require('helmet');
 
-const apiRouter = require('./api/router');
+const apiRouter = require('./app/router');
 const app = express();
 const PORT = process.env.PORT || 8080;
 
