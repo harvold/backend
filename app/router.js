@@ -1,6 +1,10 @@
 const express = require('express');
+
+const playerStuff = require('./player-stuff');
+
 const router = express.Router();
 
+<<<<<<< HEAD:backend/src/api/router.js
 const mysql = require('mysql');
 
 var con = mysql.createConnection({
@@ -29,6 +33,11 @@ router.get('/get_pokemon', function (req, res) {
 })
 
 router.get('/', function (req, res) {
-	res.send('hello world');
-})
+  res.send('hello world');
+});
+
+router.get('/u/:id', function (req, res) {
+  playerStuff.getProfile(req, res);
+});
+
 module.exports = router;
