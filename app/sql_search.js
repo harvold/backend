@@ -40,24 +40,130 @@ function getPokemon(req, res){
 
 function insertPlayer(req, res){
 	var user = req.body.username;
-	console.log(user);
 	var fname = req.body.first_name;
-	//console.log(fname);
 	var lname = req.body.last_name;
-	//console.log(lname);
 	var pass = req.body.password;
-	//console.log(pass);
 	
-	var sql = "INSERT INTO users (first_name, last_name, username, password, status) VALUES (?, ?, ?, ?, 0)"
-	con.query(sql, [fname, lname, user, pass], function(err, result)
+	verifyUserExistence(user, function(code)
 	{
-		if (err) throw err;
-		console.log(result);
-		res.status(200);
+		if (code != 0)
+		{
+			res.statusMessage = "Username already exists.";
+			res.status(400).end();
+		}
+		else
+		{
+			var sql2 = "INSERT INTO users (first_name, last_name, username, password, status) VALUES (?, ?, ?, ?, 0)"
+			con.query(sql2, [fname, lname, user, pass], function(err, result)
+			{
+				if (err) throw err;
+				console.log(result);
+				res.status(200).end();
+			});
+		}
 	});
 }
 
-function verifyPlayer(req, res){
+function login (req, res){
+	var user = req.body.username;
+	var pass = req.body.password;
+	var sql = "SELECT password FROM users WHERE username = ?";
 	
+	verifyUserExistence(user, function(code){
+		if (code == 0)
+		{
+			res.status(404).send("User not found");
+		}
+		else if (code > 1)
+		{
+			res.status(500).send("Duplicate users found");
+		}
+		else
+		{
+			con.query(sql, [user], function(err, result)
+			{
+				if (err) throw err;
+				else if (result.length == 1)
+				{
+					if (pass === result[0].password)
+					{
+						changeStatus(user, 1);
+						res.status(200).send("Login successful");
+					}
+					else
+					{
+						res.status(403).send("Password incorrect");
+					}
+					
+				}
+			});
+		}
+	});
 }
-module.exports = { getPlayer, getPokemon, insertPlayer };
+
+function changeStatus(user, state)
+{
+	var sql = "UPDATE users SET status = ? WHERE username = ?";
+	con.query(sql, [state, user], function(err, result)
+	{
+		if (err) throw err;
+		else 
+		{
+			console.log(result);
+		}
+	});
+}
+
+function verifyUserExistence(user, callback)
+{
+	var sql = "SELECT * FROM users WHERE username = ?";
+	con.query(sql, [user], function(err, result)
+	{
+		if (err) throw err;
+		else if (result.length == 1)
+		{
+			callback(1);
+		}
+		else if (result.length > 1)
+		{
+			callback(2);
+		}
+		else if (result.length == 0)
+		{
+			callback(0);
+		}
+	});
+}
+
+function logout(req, res)
+{
+	var user = req.body.username;
+	var sql = "SELECT status FROM users WHERE username = ?";
+	verifyUserExistence(user, function(code)
+	{
+		if (code == 0)
+		{
+			res.status(404).send("User not found");
+		}
+		else if (code > 1)
+		{
+			res.status(500).send("Duplicate users found");
+		}
+		else
+		{
+			con.query(sql, [user], function(err, result)
+			{
+				if(result[0].status == 0)
+				{
+					res.status(403).send("Already logged out");
+				}
+				else
+				{
+					changeStatus(user, 0);
+					res.status(200).send("Logged out");
+				}
+			});
+		}
+	});
+}
+module.exports = { getPlayer, getPokemon, insertPlayer, login, logout};

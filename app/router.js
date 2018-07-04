@@ -18,8 +18,15 @@ router.get('/u/:username', function (req, res) {
 
 router.route('/register').put(function (req, res){
 	//console.log(req.body);
-	sqlSearch.insertPlayer(req, res);
-	res.status(200).send("received");
+	sqlSearch.verifyPlayer(req, res);
+});
+
+router.route('/login').post(function(req, res){
+	sqlSearch.login(req, res);
+});
+
+router.route('/logout').post(function(req, res){
+	sqlSearch.logout(req, res);
 });
 
 module.exports = router;
