@@ -17,6 +17,4 @@ router.get('/u/:username', function (req, res) {
 	sqlSearch.getProfile(req, res);
 });
 
-router.post('
-
 module.exports = router;
