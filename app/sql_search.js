@@ -382,7 +382,7 @@ function checkIn(req, res)
 					{
 						getBattleResponses(user, function(accepted_result)
 						{
-							res.status(200).send({message: "OK", battles_pending: result, battles_accepted: accepted_result});
+							res.status(200).json({message: "OK", battles_pending: result, battles_accepted: accepted_result});
 						});
 					});
 				}
