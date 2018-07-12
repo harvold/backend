@@ -78,8 +78,8 @@ function insertPlayer(req, res){
 		}
 		else
 		{
-			var sql2 = "INSERT INTO users (first_name, last_name, username, password, status) VALUES (?, ?, ?, ?, 0)"
-			con.query(sql2, [fname, lname, user, pass], function(err, result)
+			var sql2 = "INSERT INTO users (first_name, last_name, username, password, status, last_active) VALUES (?, ?, ?, ?, 0, ?)"
+			con.query(sql2, [fname, lname, user, pass, Date.now()], function(err, result)
 			{
 				if (err) throw err;
 				console.log(result);
@@ -155,8 +155,9 @@ function login (req, res){
 
 function changeStatus(user, state)
 {
-	var sql = "UPDATE users SET status = ? WHERE username = ?";
-	con.query(sql, [state, user], function(err, result)
+	console.log(new Date());
+	var sql = "UPDATE users SET status = ?, last_active = ? WHERE username = ?";
+	con.query(sql, [state, new Date(), user], function(err, result)
 	{
 		if (err) throw err;
 		else 
@@ -165,7 +166,6 @@ function changeStatus(user, state)
 		}
 	});
 }
-
 
 
 function verifyUserExistence(user, callback)
@@ -185,6 +185,101 @@ function verifyUserExistence(user, callback)
 		else if (result.length == 0)
 		{
 			callback(0);
+		}
+	});
+}
+
+function createBattle(req, res)
+{
+	var user = req.body.username;
+	var target = req.body.target;
+	var sql = "INSERT INTO battles (challenger, challenged, status, winner) VALUES (?, ?, 0, null)";
+	verifyUserExistence(user, function(code)
+	{
+		if (code == 0)
+		{
+			res.status(404).send("User not found");
+		}
+		else if (code > 1)
+		{
+			res.status(500).send("Duplicate users found");
+		}
+		else
+		{
+			verifyUserExistence(target, 
+			function(code)
+			{
+				if (code == 0)
+				{
+					res.status(404).send("Target not found");
+				}
+				else if (code > 1)
+				{
+					res.status(500).send("Duplicate target found");
+				}
+				else
+				{
+					console.query(sql, [user, target], function (err, result)
+					{
+						if (err) err;
+						else
+						{
+							res.status(200).send("Battle created");
+						}
+					});
+				}
+			});
+		}
+	});
+}
+
+function checkRecency (time, username, callback)
+{
+	var sql = "SELECT last_active FROM users WHERE username = ?";
+	con.query(sql, [username], function (err, result)
+	{
+		if (err) throw err;
+		else
+		{
+			searchresult = result[0];
+			var millislast = Date.parse(searchresult.last_active);
+			var millisnow = Date.parse(time);
+			if (millisnow - millislast > 20000)
+			{
+				changeStatus(username, 0);
+				callback(false);
+			}
+			else
+			{
+				changeStatus(username, 1);
+				callback(true);
+			}
+		}
+	});
+}
+
+function getLatestBattles(username, callback)
+{
+	var sql = "SELECT id, challenger FROM battles WHERE (challenged = ? AND status = 0)";
+	con.query(sql, [username], function(err, result)
+	{
+		if (err) throw err;
+		else
+		{
+			callback(result);
+		}
+	});
+}
+
+function getBattleResponses(username, clalback)
+{
+	var sql = "SELECT id, status, challenger FROM battles WHERE (challenger = ? AND status = 9)";
+	con.query(sql, [username], function(err, result)
+	{
+		if (err) throw err;
+		else
+		{
+			callback(result);
 		}
 	});
 }
@@ -233,6 +328,67 @@ function logout(req, res)
 	});
 }
 
+function rejectBattle(req, res)
+{
+	var user = req.body.username;
+	var id = req.body.id;
+	var sql = "UPDATE battles SET status = -1 WHERE (id = ? AND user = ?)"
+	verifyUserExistence(user, function(code)
+	{
+		if (code == 0)
+		{
+			res.status(404).send("User not found");
+		}
+		else if (code > 1)
+		{
+			res.status(500).send("Duplicate users found");
+		}
+		else
+		{
+			con.query(sql, [id, user], function(err, result)
+			{
+				if (err) throw err;
+				res.status(200).send(result.affectedRows + " battles cancelled");
+			});
+		}
+	});
+}
 
+function checkIn(req, res)
+{
+	var user = req.body.username;
+	var last_time = req.body.timestamp;
+	verifyUserExistence(user, function(code)
+	{
+		if (code == 0)
+		{
+			res.status(404).send("User not found");
+		}
+		else if (code > 1)
+		{
+			res.status(500).send("Duplicate users found");
+		}
+		else
+		{
+			checkRecency(last_time, user, function(recent)
+			{
+				if (!recent)
+				{
+					res.status(403).send("Session timed out, please log in again.");
+				}
+				else
+				{
+					getLatestBattles(user, function (result)
+					{
+						getBattleResponses(user, function(accepted_result)
+						{
+							res.status(200).send({message: "OK", battles_pending: result, battles_accepted: accepted_result});
+						});
+					});
+				}
+			});
+		}
+	});
+}
 
-module.exports = { getPlayer, getPokemon, insertPlayer, login, logout};
+module.exports = { getPlayer, getPokemon, insertPlayer, login, logout, checkIn, createBattle, rejectBattle };
