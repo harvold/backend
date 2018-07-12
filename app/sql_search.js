@@ -219,7 +219,7 @@ function createBattle(req, res)
 				}
 				else
 				{
-					console.query(sql, [user, target], function (err, result)
+					con.query(sql, [user, target], function (err, result)
 					{
 						if (err) err;
 						else
@@ -271,7 +271,7 @@ function getLatestBattles(username, callback)
 	});
 }
 
-function getBattleResponses(username, clalback)
+function getBattleResponses(username, callback)
 {
 	var sql = "SELECT id, status, challenger FROM battles WHERE (challenger = ? AND status = 9)";
 	con.query(sql, [username], function(err, result)
@@ -332,7 +332,7 @@ function rejectBattle(req, res)
 {
 	var user = req.body.username;
 	var id = req.body.id;
-	var sql = "UPDATE battles SET status = -1 WHERE (id = ? AND user = ?)"
+	var sql = "UPDATE battles SET status = -1 WHERE (id = ? AND challenged = ?)"
 	verifyUserExistence(user, function(code)
 	{
 		if (code == 0)

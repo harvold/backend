@@ -25,7 +25,7 @@ router.route('/challenge').post(function (req, res){
 	sqlSearch.createBattle(req, res);
 });
 
-router.route('/reject_battle').put(function (req, res){
+router.route('/reject_battle').post(function (req, res){
 	sqlSearch.rejectBattle(req, res);
 });
 
