@@ -21,12 +21,24 @@ router.route('/register').put(function (req, res){
 	sqlSearch.verifyPlayer(req, res);
 });
 
+router.route('/challenge').post(function (req, res){
+	sqlSearch.createBattle(req, res);
+});
+
+router.route('/reject_battle').post(function (req, res){
+	sqlSearch.rejectBattle(req, res);
+});
+
 router.route('/login').post(function(req, res){
 	sqlSearch.login(req, res);
 });
 
 router.route('/logout').post(function(req, res){
 	sqlSearch.logout(req, res);
+});
+
+router.route('/checkin').post(function(req, res){
+	sqlSearch.checkIn(req, res);
 });
 
 module.exports = router;
