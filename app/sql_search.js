@@ -221,7 +221,7 @@ function createBattle(req, res)
 				{
 					con.query(sql, [user, target], function (err, result)
 					{
-						if (err) err;
+						if (err) throw err;
 						else
 						{
 							res.status(200).send("Battle created");
