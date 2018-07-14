@@ -348,7 +348,14 @@ function rejectBattle(req, res)
 			con.query(sql, [id, user], function(err, result)
 			{
 				if (err) throw err;
-				res.status(200).send(result.affectedRows + " battles cancelled");
+				else if (result.changedRows < 1)
+				{
+					res.status(404).send("Battle not found");
+				}
+				else
+				{
+					res.status(200).send("Battle cancelled");
+				}
 			});
 		}
 	});
@@ -390,5 +397,37 @@ function checkIn(req, res)
 		}
 	});
 }
+function acceptBattle(req, res)
+{
+	var user = req.body.username;
+	var id = req.body.id;
+	var sql1 = "UPDATE battles SET status = 9 WHERE (id = ? AND challenged = ?";
+	verifyUserExistence(user, function (code)
+	{
+		if (code == 0)
+		{
+			res.status(404).send("User not found");
+		}
+		else if (code > 1)
+		{
+			res.status(500).send("Duplicate users found");
+		}
+		else
+		{
+			con.query(sql, [id, user], function(err, result)
+			{
+				if (err) throw err;
+				else if (result.changedRows < 1)
+				{
+					res.status(404).send("Battle not found");
+				}
+				else
+				{
+					res.status(200).json({message: "Battle accepted", id: id);
+				}
+			});
+		}
+	}
+}
 
-module.exports = { getPlayer, getPokemon, insertPlayer, login, logout, checkIn, createBattle, rejectBattle };
+module.exports = { getPlayer, getPokemon, insertPlayer, login, logout, checkIn, createBattle, rejectBattle, acceptBattle };
