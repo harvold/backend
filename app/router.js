@@ -4,9 +4,19 @@ const sqlSearch = require('./sql_search');
 
 const router = express.Router();
 
-router.get('/get_pokemon', function (req, res) {
-	sqlSearch.getPokemon(req, res);
-})
+router.get('/get_pokemon', async function (req, res, next) {
+	try
+	{
+		var data = await sqlSearch.getPokemon(req);
+		//console.log(data);
+		res.status(200).send(data);
+	}
+	catch(err)
+	{
+		next(err);
+		return;
+	}
+});
 
 router.get('/', function (req, res) {
 	res.send('hello world');
@@ -40,5 +50,6 @@ router.route('/logout').post(function(req, res){
 router.route('/checkin').post(function(req, res){
 	sqlSearch.checkIn(req, res);
 });
+
 
 module.exports = router;

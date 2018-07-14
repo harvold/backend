@@ -14,17 +14,19 @@ con.connect(function(err)
 	console.log("MySQL Connected");
 });
 
-function getPlayer(req, res) {
+async function getPlayer(req, res) {
 	var user = req.params.username;
 	
 	var sql = "SELECT first_name, last_name, username, status FROM users WHERE username= ?";
-	con.query(sql, [user], function(err, result)
+	return new Promise((resolve, reject) =>
 	{
-		if (err) throw err;
-		console.log("player_search");
-		res.status(200).json(result);
+		con.query(sql, [user], function(err, result)
+		{
+			if (err) reject err;
+			console.log("player_search");
+			resolve(result);
+		});
 	});
-    
 }
 
 /**
@@ -37,16 +39,19 @@ function getPlayer(req, res) {
  *	A list of all pokemon owned by a trainer in json format.
  */
 
-function getPokemon(req, res){
+async function getPokemon(req){
 	var user = req.query['username'];
 	var sql = "SELECT name, hp, max_hp, exp, to_next FROM pokemon WHERE owner= ?";
-	
-	con.query(sql, [user], function(err, result)
+	return new Promise((resolve, reject) =>
 	{
-		if (err) throw err;
-		console.log ("searched");
-		res.status(200).json(result);
+		con.query(sql, [user], function(err, result)
+		{
+			if (err) reject(err);
+			console.log ("searched");
+			resolve (result);
+		});
 	});
+	
 }
 
 /**
@@ -423,11 +428,11 @@ function acceptBattle(req, res)
 				}
 				else
 				{
-					res.status(200).json({message: "Battle accepted", id: id);
+					res.status(200).json({message: "Battle accepted", id: id});
 				}
 			});
 		}
-	}
+	});
 }
 
 module.exports = { getPlayer, getPokemon, insertPlayer, login, logout, checkIn, createBattle, rejectBattle, acceptBattle };
