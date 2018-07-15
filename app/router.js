@@ -60,7 +60,7 @@ router.route('/register').put(async function (req, res, next){
 router.route('/challenge').post(async function (req, res, next){
 	try
 	{
-		var data = await sqlSearch.createBattle(req);
+		var data = await sqlSearch.challenge(req);
 		res.status(data.code).send(data.message);
 	}
 	catch(err)
