@@ -221,6 +221,7 @@ async function challenge(req)
 	var target = req.body.target;
 	var code = await verifyUserExistence(user);
 	var code2 = await verifyUserExistence(target);
+	var sql = "INSERT INTO battles (challenger, challenged, status, winner) VALUES (?, ?, 0, null)";
 	return new Promise((resolve, reject) =>
 	{
 		if (code == 0)
