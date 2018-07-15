@@ -67,8 +67,12 @@ async function getPokemon(req){
  *	400 - User already exists, please choose different username
  */
 
-async function insertPlayer(req){
+async function register(req){
 	var user = req.body.username;
+	var fname = req.body.first_name;
+	var lname = req.body.last_name;
+	var pass = req.body.password;
+	var sql2 = "INSERT INTO users (first_name, last_name, username, password, status, last_active) VALUES (?, ?, ?, ?, 0, ?)";
 	var exists = await verifyUserExistence(user);
 
 	return new Promise(async (resolve, reject) =>
@@ -79,34 +83,21 @@ async function insertPlayer(req){
 		}
 		else
 		{
-			var result = await register(req);
-			console.log(result);
-			resolve(result);
+			console.log("Here");
+			var date = new Date;
+			console.log(date.toString());
+			con.query(sql2, [fname, lname, user, pass, date], function(err, result)
+			{
+				if (err) reject(err);
+				else
+				{
+					console.log(result);
+					resolve(200);
+				}
+			});
 		}
 	});
 }
-
-async function register(req)
-{
-	var user = req.body.username;
-	var fname = req.body.first_name;
-	var lname = req.body.last_name;
-	var pass = req.body.password;
-	var sql2 = "INSERT INTO users (first_name, last_name, username, password, status, last_active) VALUES (?, ?, ?, ?, 0, ?)";
-	
-	return new Promise((resolve, reject) =>
-	{
-		con.query(sql2, [fname, lname, user, pass, Date.now()], function(err, result)
-		{
-			if (err) reject(err);
-			else
-			{
-				console.log(result);
-				resolve(200);
-			}
-		});
-	});
-}	
 
 /**
  *	Logs a user in
@@ -484,4 +475,4 @@ function acceptBattle(req, res)
 	});
 }
 
-module.exports = { getPlayer, getPokemon, insertPlayer, login, logout, checkIn, challenge, rejectBattle, acceptBattle };
+module.exports = { getPlayer, getPokemon, register, login, logout, checkIn, challenge, rejectBattle, acceptBattle };

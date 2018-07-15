@@ -14,6 +14,9 @@ router.get('/get_pokemon', async function (req, res, next) {
 	catch(err)
 	{
 		next(err);
+		console.log(err);
+		res.status(500).send(data);
+
 		return;
 	}
 });
@@ -31,6 +34,9 @@ router.get('/u/:username', async function (req, res, next) {
 	catch(err)
 	{
 		next(err);
+		console.log(err);
+		res.status(500).send(data);	
+		return;
 	}
 	
 });
@@ -39,12 +45,15 @@ router.route('/register').put(async function (req, res, next){
 	//console.log(req.body);
 	try
 	{
-		var data = await sqlSearch.insertPlayer(req);
+		var data = await sqlSearch.register(req);
 		res.status(data).end();
 	}
 	catch(err)
 	{
 		next(err);
+		console.log(err);
+		res.status(500).send(data);
+		return;
 	}
 });
 
@@ -57,6 +66,9 @@ router.route('/challenge').post(async function (req, res, next){
 	catch(err)
 	{
 		next(err);
+		console.log(err);
+		res.status(500).send(data);
+		return;
 	}
 });
 
@@ -69,6 +81,9 @@ router.route('/reject_battle').post(async function (req, res, next){
 	catch(err)
 	{
 		next(err);
+		console.log(err);
+		res.status(500).send(data);
+		return;
 	}
 });
 
@@ -81,6 +96,9 @@ router.route('/login').post(async function(req, res, next){
 	catch(err)
 	{
 		next(err);
+		console.log(err);
+		res.status(500).send(data);
+		return;
 	}
 });
 
@@ -93,6 +111,9 @@ router.route('/logout').post(async function(req, res, next){
 	catch(err)
 	{
 		next(err);
+		console.log(err);
+		res.status(500).send(data);
+		return;
 	}
 });
 
@@ -114,6 +135,8 @@ router.route('/checkin').post(async function(req, res, next){
 	{
 		next(err);
 		console.log(err);
+		res.status(500).send(data);
+		return;
 	}
 });
 
