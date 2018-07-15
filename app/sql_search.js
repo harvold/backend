@@ -226,19 +226,19 @@ async function challenge(req)
 	{
 		if (code == 0)
 		{
-			resolve({code: 404, message: "User not found"})
+			resolve({code: 404, message: "User not found"});
 		}
 		else if (code > 1)
 		{
-			resolve({code: 500, message: "Duplicate users found"})
+			resolve({code: 500, message: "Duplicate users found"});
 		}
 		else if (code2 == 0)
 		{
-			resolve({code: 404, message: "Target not found"})
+			resolve({code: 404, message: "Target not found"});
 		}
 		else if (code2 > 1)
 		{
-			resolve({code: 500, message: "Duplicate target found"})
+			resolve({code: 500, message: "Duplicate target found"});
 		}
 		else
 		{
@@ -247,7 +247,7 @@ async function challenge(req)
 				if (err) throw err;
 				else
 				{
-					resolve({code: 200, message: "Battle created"})
+					resolve({code: 200, message: "Battle created"});
 				}
 			});
 		}
