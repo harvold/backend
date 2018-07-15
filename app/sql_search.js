@@ -14,17 +14,19 @@ con.connect(function(err)
 	console.log("MySQL Connected");
 });
 
-function getPlayer(req, res) {
+async function getPlayer(req, res) {
 	var user = req.params.username;
 	
 	var sql = "SELECT first_name, last_name, username, status FROM users WHERE username= ?";
-	con.query(sql, [user], function(err, result)
+	return new Promise((resolve, reject) =>
 	{
-		if (err) throw err;
-		console.log("player_search");
-		res.status(200).json(result);
+		con.query(sql, [user], function(err, result)
+		{
+			if (err) reject(err);
+			console.log("player_search");
+			resolve(result);
+		});
 	});
-    
 }
 
 /**
@@ -37,15 +39,17 @@ function getPlayer(req, res) {
  *	A list of all pokemon owned by a trainer in json format.
  */
 
-function getPokemon(req, res){
+async function getPokemon(req){
 	var user = req.query['username'];
 	var sql = "SELECT name, hp, max_hp, exp, to_next FROM pokemon WHERE owner= ?";
-	
-	con.query(sql, [user], function(err, result)
+	return new Promise((resolve, reject) =>
 	{
-		if (err) throw err;
-		console.log ("searched");
-		res.status(200).json(result);
+		con.query(sql, [user], function(err, result)
+		{
+			if (err) reject(err);
+			console.log ("searched");
+			resolve (result);
+		});
 	});
 }
 
@@ -63,27 +67,33 @@ function getPokemon(req, res){
  *	400 - User already exists, please choose different username
  */
 
-function insertPlayer(req, res){
+async function register(req){
 	var user = req.body.username;
 	var fname = req.body.first_name;
 	var lname = req.body.last_name;
 	var pass = req.body.password;
-	
-	verifyUserExistence(user, function(code)
+	var sql2 = "INSERT INTO users (first_name, last_name, username, password, status, last_active) VALUES (?, ?, ?, ?, 0, ?)";
+	var exists = await verifyUserExistence(user);
+
+	return new Promise(async (resolve, reject) =>
 	{
-		if (code != 0)
+		if (exists != 0)
 		{
-			res.statusMessage = "Username already exists.";
-			res.status(400).end();
+			resolve(400);
 		}
 		else
 		{
-			var sql2 = "INSERT INTO users (first_name, last_name, username, password, status, last_active) VALUES (?, ?, ?, ?, 0, ?)"
-			con.query(sql2, [fname, lname, user, pass, Date.now()], function(err, result)
+			console.log("Here");
+			var date = new Date;
+			console.log(date.toString());
+			con.query(sql2, [fname, lname, user, pass, date], function(err, result)
 			{
-				if (err) throw err;
-				console.log(result);
-				res.status(200).end();
+				if (err) reject(err);
+				else
+				{
+					console.log(result);
+					resolve(200);
+				}
 			});
 		}
 	});
@@ -104,44 +114,56 @@ function insertPlayer(req, res){
  * 	500 - Duplicate users (This should never happen)
  */
 
-function login (req, res){
+async function login (req){
 	var user = req.body.username;
-	var pass = req.body.password;
-	var sql = "SELECT password, status FROM users WHERE username = ?";
+	var code = await verifyUserExistence(user);
 	
-	verifyUserExistence(user, function(code){
+	return new Promise (async (resolve, reject) =>
+	{
 		if (code == 0)
 		{
-			res.status(404).send("User not found");
+			resolve({code: 404, message: "User not found"});
 		}
 		else if (code > 1)
 		{
-			res.status(500).send("Duplicate users found");
+			resolve({code: 500, message: "Duplicate users found"});
 		}
 		else
 		{
-			con.query(sql, [user], function(err, result)
-			{
-				if (err) throw err;
-				else if (result.length == 1)
-				{
-					if (result[0].status == 1)
-					{
-						res.status(403).send("User already logged in");
-					}
-					else if (pass === result[0].password)
-					{
-						changeStatus(user, 1);
-						res.status(200).send("Login successful");
-					}
-					else
-					{
-						res.status(401).send("Password incorrect");
-					}
-					
-				}
-			});
+			var response = await authenticate (req);
+			resolve(response);
 		}
+	});
+}
+
+async function authenticate(req)
+{
+	var user = req.body.username;
+	var pass = req.body.password;
+	var sql = "SELECT password, status FROM users WHERE username = ?";
+	return new Promise((resolve, reject) =>
+	{
+		con.query(sql, [user], function(err, result)
+		{
+			if (err) reject(err);
+			else if (result.length == 1)
+			{
+				if (result[0].status == 1)
+				{
+					resolve({code: 403, message: "User already logged in"});
+				}
+				else if (pass === result[0].password)
+				{
+					changeStatus(user, 1);
+					resolve({code: 200, message: "Login successful"});
+				}
+				else
+				{
+					resolve({code: 401, message: "Password incorrect"});
+				}
+				
+			}
+		});
 	});
 }
 
@@ -168,119 +190,129 @@ function changeStatus(user, state)
 }
 
 
-function verifyUserExistence(user, callback)
+async function verifyUserExistence(user)
 {
 	var sql = "SELECT * FROM users WHERE username = ?";
-	con.query(sql, [user], function(err, result)
+	
+	return new Promise((resolve, reject) =>
 	{
-		if (err) throw err;
-		else if (result.length == 1)
+		con.query(sql, [user], function(err, result)
 		{
-			callback(1);
-		}
-		else if (result.length > 1)
-		{
-			callback(2);
-		}
-		else if (result.length == 0)
-		{
-			callback(0);
-		}
-	});
+			if (err) reject(err);
+			else if (result.length == 1)
+			{
+				resolve(1)
+			}
+			else if (result.length > 1)
+			{
+				resolve(2);
+			}
+			else if (result.length == 0)
+			{
+				resolve(0);
+			}
+		});
+	});	
 }
 
-function createBattle(req, res)
+async function challenge(req)
 {
 	var user = req.body.username;
 	var target = req.body.target;
+	var code = await verifyUserExistence(user);
+	var code2 = await verifyUserExistence(target);
 	var sql = "INSERT INTO battles (challenger, challenged, status, winner) VALUES (?, ?, 0, null)";
-	verifyUserExistence(user, function(code)
+	return new Promise((resolve, reject) =>
 	{
 		if (code == 0)
 		{
-			res.status(404).send("User not found");
+			resolve({code: 404, message: "User not found"});
 		}
 		else if (code > 1)
 		{
-			res.status(500).send("Duplicate users found");
+			resolve({code: 500, message: "Duplicate users found"});
+		}
+		else if (code2 == 0)
+		{
+			resolve({code: 404, message: "Target not found"});
+		}
+		else if (code2 > 1)
+		{
+			resolve({code: 500, message: "Duplicate target found"});
 		}
 		else
 		{
-			verifyUserExistence(target, 
-			function(code)
+			con.query(sql, [user, target], function (err, result)
 			{
-				if (code == 0)
-				{
-					res.status(404).send("Target not found");
-				}
-				else if (code > 1)
-				{
-					res.status(500).send("Duplicate target found");
-				}
+				if (err) throw err;
 				else
 				{
-					con.query(sql, [user, target], function (err, result)
-					{
-						if (err) throw err;
-						else
-						{
-							res.status(200).send("Battle created");
-						}
-					});
+					resolve({code: 200, message: "Battle created"});
 				}
 			});
 		}
 	});
+	
 }
 
-function checkRecency (time, username, callback)
+async function checkRecency (time, username)
 {
 	var sql = "SELECT last_active FROM users WHERE username = ?";
-	con.query(sql, [username], function (err, result)
+	
+	return new Promise((resolve, reject) =>
 	{
-		if (err) throw err;
-		else
+		con.query(sql, [username], function (err, result)
 		{
-			searchresult = result[0];
-			var millislast = Date.parse(searchresult.last_active);
-			var millisnow = Date.parse(time);
-			if (millisnow - millislast > 20000)
-			{
-				changeStatus(username, 0);
-				callback(false);
-			}
+			if (err) reject(err);
 			else
 			{
-				changeStatus(username, 1);
-				callback(true);
+				searchresult = result[0];
+				var millislast = Date.parse(searchresult.last_active);
+				var millisnow = Date.parse(time);
+				if (millisnow - millislast > 20000)
+				{
+					changeStatus(username, 0);
+					resolve(false);
+				}
+				else
+				{
+					changeStatus(username, 1);
+					resolve(true);
+				}
 			}
-		}
+		});
 	});
 }
 
-function getLatestBattles(username, callback)
+async function getLatestBattles(username)
 {
 	var sql = "SELECT id, challenger FROM battles WHERE (challenged = ? AND status = 0)";
-	con.query(sql, [username], function(err, result)
+	return new Promise((resolve, reject) =>
 	{
-		if (err) throw err;
-		else
+		con.query(sql, [username], function(err, result)
 		{
-			callback(result);
-		}
+			if (err) reject(err);
+			else
+			{
+				resolve(result);
+			}
+		});
 	});
 }
 
-function getBattleResponses(username, callback)
+async function getBattleResponses(username)
 {
 	var sql = "SELECT id, status, challenger FROM battles WHERE (challenger = ? AND status = 9)";
-	con.query(sql, [username], function(err, result)
+	return new Promise ((resolve, reject) =>
 	{
-		if (err) throw err;
-		else
+		con.query(sql, [username], function(err, result)
 		{
-			callback(result);
-		}
+			if (err) reject(err);
+			else
+			{
+				resolve(result);
+			}
+		});
 	});
 }
 
@@ -296,44 +328,127 @@ function getBattleResponses(username, callback)
  *	404 - User does not exists
  * 	500 - Duplicate users (This should never happen)
  */
-function logout(req, res)
+async function logout(req)
 {
 	var user = req.body.username;
 	var sql = "SELECT status FROM users WHERE username = ?";
-	verifyUserExistence(user, function(code)
+	var code = await verifyUserExistence(user);
+	return new Promise(async(resolve, reject) =>
 	{
 		if (code == 0)
 		{
-			res.status(404).send("User not found");
+			resolve({code: 404, message: "User not found"});
 		}
 		else if (code > 1)
 		{
-			res.status(500).send("Duplicate users found");
+			resolve({code: 500, message: "Duplicate users exist"});
 		}
 		else
 		{
-			con.query(sql, [user], function(err, result)
+			var result = await applyLogOut(req);
+			resolve(result);
+		}
+	});
+}
+
+async function applyLogOut(req)
+{
+	var user = req.body.username;
+	var sql = "SELECT status FROM users WHERE username = ?";
+	return new Promise((resolve, reject) =>
+	{
+		con.query(sql, [user], function(err, result)
+		{
+			if (err) reject(err);
+			else if(result[0].status == 0)
 			{
-				if(result[0].status == 0)
+				resolve({code: 403, message: "Already logged out"});
+			}
+			else
+			{
+				changeStatus(user, 0);
+				resolve({code: 200, message: "Logged out"});
+			}
+		});
+	});
+}
+
+
+
+async function rejectBattle(req)
+{
+	var user = req.body.username;
+	var id = req.body.id;
+	var sql = "UPDATE battles SET status = -1 WHERE (id = ? AND challenged = ?)";
+	var code = await verifyUserExistence(user);
+	return new Promise(async (resolve, reject) =>
+	{
+		if (code == 0)
+		{
+			resolve({code:404, message: "User not found"});
+		}
+		else if (code > 1)
+		{
+			resolve({code:500, message: "Duplicate users found"});
+		}
+		else
+		{
+			con.query(sql, [id, user], function(err, result)
+			{
+				if (err) reject(err);
+				else if (result.changedRows < 1)
 				{
-					res.status(403).send("Already logged out");
+					resolve({code:404, message: "Battle not found"});
 				}
 				else
 				{
-					changeStatus(user, 0);
-					res.status(200).send("Logged out");
+					resolve({code:200, message: "Battle cancelled"});
 				}
 			});
 		}
 	});
 }
 
-function rejectBattle(req, res)
+async function checkIn(req)
+{
+	var user = req.body.username;
+	var last_time = req.body.timestamp;
+	console.log("Here")
+	var code = await verifyUserExistence(user);
+
+	return new Promise(async (resolve, reject) =>
+	{
+		if (code == 0)
+		{
+			resolve({code: 404, message: "User not found"});
+		}
+		else if (code > 1)
+		{
+			resolve({code: 500, message: "Duplicate users found"});
+		}
+		else
+		{
+			var recent = await checkRecency(last_time, user);
+			if (!recent)
+			{
+				resolve({code: 403, message: "Session timed out, please log in again"});
+			}
+			else
+			{
+				var challenges = await getLatestBattles(user);
+				var responses = await getBattleResponses(user);
+				resolve({code: 200, info: ({message: "OK", battles_pending: challenges, battles_accepted: responses})});
+			}
+		}
+	});
+	
+}
+function acceptBattle(req, res)
 {
 	var user = req.body.username;
 	var id = req.body.id;
-	var sql = "UPDATE battles SET status = -1 WHERE (id = ? AND challenged = ?)"
-	verifyUserExistence(user, function(code)
+	var sql1 = "UPDATE battles SET status = 9 WHERE (id = ? AND challenged = ?";
+	verifyUserExistence(user, function (code)
 	{
 		if (code == 0)
 		{
@@ -348,47 +463,17 @@ function rejectBattle(req, res)
 			con.query(sql, [id, user], function(err, result)
 			{
 				if (err) throw err;
-				res.status(200).send(result.affectedRows + " battles cancelled");
-			});
-		}
-	});
-}
-
-function checkIn(req, res)
-{
-	var user = req.body.username;
-	var last_time = req.body.timestamp;
-	verifyUserExistence(user, function(code)
-	{
-		if (code == 0)
-		{
-			res.status(404).send("User not found");
-		}
-		else if (code > 1)
-		{
-			res.status(500).send("Duplicate users found");
-		}
-		else
-		{
-			checkRecency(last_time, user, function(recent)
-			{
-				if (!recent)
+				else if (result.changedRows < 1)
 				{
-					res.status(403).send("Session timed out, please log in again.");
+					res.status(404).send("Battle not found");
 				}
 				else
 				{
-					getLatestBattles(user, function (result)
-					{
-						getBattleResponses(user, function(accepted_result)
-						{
-							res.status(200).json({message: "OK", battles_pending: result, battles_accepted: accepted_result});
-						});
-					});
+					res.status(200).json({message: "Battle accepted", id: id});
 				}
 			});
 		}
 	});
 }
 
-module.exports = { getPlayer, getPokemon, insertPlayer, login, logout, checkIn, createBattle, rejectBattle };
+module.exports = { getPlayer, getPokemon, register, login, logout, checkIn, challenge, rejectBattle, acceptBattle };
