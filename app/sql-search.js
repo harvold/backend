@@ -124,7 +124,7 @@ async function authenticate(req) {
  */
 
 async function changeStatus(user, state) {
-  const date = console.log(new Date());
+  const date = new Date();
   const sql = "UPDATE users SET status = ?, last_active = ? WHERE username = ?";
   const result = await query(sql, [state, date, user]);
   console.log(result);
