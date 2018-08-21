@@ -1,6 +1,6 @@
 const express = require('express');
 
-const sqlSearch = require('./sql_search');
+const sqlSearch = require('./sql-search');
 
 const router = express.Router();
 
