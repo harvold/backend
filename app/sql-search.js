@@ -287,6 +287,21 @@ async function checkIn(req) {
   }
 }
 
+
+async function updateLocation(req) {
+  const user = req.body.username;
+  const code = await verifyUserExistence(user);
+
+  if (code == 0) return { code: 404, message: "User not found" };
+  if (code > 1) return { code: 500, message: "Duplicate users found" };
+
+  const sql = "UPDATE users SET location = ? WHERE (username = ?)";
+  const result = await query(sql, [req.body.new_location, user]);
+  console.log(req.body.new_location, user, result);
+  return {code: 200, message: "player location updated"};
+}
+
+
 // TODO?
 function acceptBattle(req, res) {
   const user = req.body.username;
@@ -313,4 +328,4 @@ function acceptBattle(req, res) {
   });
 }
 
-module.exports = { getPlayer, getPokemon, register, login, logout, checkIn, challenge, rejectBattle, acceptBattle };
+module.exports = { getPlayer, getPokemon, register, login, logout, checkIn, challenge, rejectBattle, acceptBattle, updateLocation};
