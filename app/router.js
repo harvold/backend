@@ -140,5 +140,25 @@ router.route('/checkin').post(async function(req, res, next){
 	}
 });
 
+router.route('/new_pokemon').post(async function(req, res, next)
+{
+    try
+    {
+        var returned = await sqlSearch.randomPokemon(req, res);
+        
+        if (returned.code == 200)
+        {
+            res.status(returned.code).json(returned.data);
+        }
+    }
+    catch(err)
+    {
+        next(err);
+        console.log(err);
+        res.status(500).send("");
+        return;
+    }
+});
+
 
 module.exports = router;
