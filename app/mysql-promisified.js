@@ -8,12 +8,11 @@ let con;
  * @param {ConnectionConfig} settings connection config for createConnection function of mysql module 
  */
 function connect(settings) {
-  con = mysql.createConnection(settings);
-  con.connect(function (err) {
-    if (err)
-      throw err;
-    console.log("MySQL Connected");
-  });
+    con = mysql.createConnection(settings);
+    con.connect(function (err) {
+        if (err) throw err;
+        console.log("MySQL Connected");
+    });
 }
 
 /**
@@ -22,13 +21,13 @@ function connect(settings) {
  * @param {Array<string>} args arguments for the query
  */
 function query(sql, args) {
-  return new Promise((resolve, reject) => {
-    con.query(sql, args, (err, result) => {
-      if (err)
-        return reject(err);
-      resolve(result);
+    return new Promise((resolve, reject) => {
+        con.query(sql, args, (err, result) => {
+            if (err)
+                return reject(err);
+            resolve(result);
+        });
     });
-  });
 }
 
 
